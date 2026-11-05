@@ -1,0 +1,7 @@
+<linker>
+  <assembly fullname="CSorbit" preserve="all" />
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="CSorbitUnityExample.CSorbitDemoEventListener" preserve="all" />
+    <type fullname="CSorbitUnityExample.CSorbitDemoEventListener+DamageEvent" preserve="all" />
+  </assembly>
+</linker>

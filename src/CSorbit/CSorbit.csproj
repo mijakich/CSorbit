@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
+    <AssemblyName>CSorbit</AssemblyName>
+    <RootNamespace>CSorbit</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IsPackable>true</IsPackable>
+    <PackageId>CSorbit</PackageId>
+    <Version>0.3.0</Version>
+    <Description>C# port of Meteor Development Orbit for Godot, Unity and .NET.</Description>
+    <Authors>CSorbit contributors; Meteor Development (original Java library)</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>orbit;events;godot;unity</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../README.ru.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+    <None Include="../../docs/*.md" Pack="true" PackagePath="/docs/" />
+  </ItemGroup>
+</Project>

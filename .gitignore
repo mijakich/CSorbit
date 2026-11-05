@@ -1,0 +1,28 @@
+# Build output and local tooling caches
+**/bin/
+**/obj/
+**/artifacts/
+.cache/
+**/.nuget/
+**/.dotnet/
+.vs/
+.idea/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+*.dll
+*.pdb
+*.exe
+*.zip
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Godot and Unity generated state
+**/.godot/
+**/.mono/
+**/.import/
+**/Library/
+**/Temp/
+**/Logs/

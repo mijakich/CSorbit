@@ -1,0 +1,92 @@
+name: Publish release
+
+on:
+  push:
+    tags: ['v*', '[0-9]*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: csorbit-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Validate tag and read version
+        id: version
+        shell: pwsh
+        env:
+          CSORBIT_TAG: ${{ github.ref_name }}
+        run: |
+          $csorbitNumber = '(0|[1-9][0-9]*)'
+          $csorbitIdentifier = '(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          $csorbitTagPattern = "^v?(?<displayVersion>(?<major>$csorbitNumber)\.(?<minor>$csorbitNumber)(?:\.(?<patch>$csorbitNumber))?(?<suffix>-$csorbitIdentifier(?:\.$csorbitIdentifier)*)?)$"
+          if ($env:CSORBIT_TAG -notmatch $csorbitTagPattern) {
+              throw 'Use a tag such as 1.0, v1.0.0, or v1.1.0-rc.1.'
+          }
+          $csorbitDisplayVersion = $Matches.displayVersion
+          $csorbitPatch = if ($Matches.patch) { $Matches.patch } else { '0' }
+          $csorbitVersion = "$($Matches.major).$($Matches.minor).$csorbitPatch$($Matches.suffix)"
+          $csorbitPrerelease = $csorbitVersion.Contains('-').ToString().ToLowerInvariant()
+          "version=$csorbitVersion" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+          "display_version=$csorbitDisplayVersion" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+          "prerelease=$csorbitPrerelease" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+      - name: Build, test, and package the tagged version
+        shell: pwsh
+        env:
+          CSORBIT_VERSION: ${{ steps.version.outputs.version }}
+        run: ./scripts/build.ps1 -Version $env:CSORBIT_VERSION
+      - name: Publish GitHub Release and attach packages
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CSORBIT_TAG: ${{ github.ref_name }}
+          CSORBIT_VERSION: ${{ steps.version.outputs.version }}
+          CSORBIT_DISPLAY_VERSION: ${{ steps.version.outputs.display_version }}
+          CSORBIT_PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          $csorbitVersion = $env:CSORBIT_VERSION
+          $csorbitAssets = @(
+              'artifacts/CSorbit-godot3.zip',
+              'artifacts/CSorbit-godot4.zip',
+              'artifacts/CSorbit-unity.zip',
+              'artifacts/CSorbit-dotnet.zip',
+              "artifacts/nuget/CSorbit.$csorbitVersion.nupkg"
+          )
+          foreach ($csorbitAsset in $csorbitAssets) {
+              if (!(Test-Path -LiteralPath $csorbitAsset -PathType Leaf)) {
+                  throw "Missing release asset: $csorbitAsset"
+              }
+          }
+
+          & gh release view $env:CSORBIT_TAG --repo $env:GH_REPO 1>$null 2>$null
+          if ($LASTEXITCODE -eq 0) {
+              & gh release upload $env:CSORBIT_TAG @csorbitAssets --repo $env:GH_REPO --clobber
+          } else {
+              $csorbitCreateArguments = @(
+                  'release', 'create', $env:CSORBIT_TAG,
+                  '--repo', $env:GH_REPO, '--verify-tag',
+                  '--title', "CSorbit $env:CSORBIT_DISPLAY_VERSION", '--generate-notes'
+              )
+              if ($env:CSORBIT_PRERELEASE -eq 'true') {
+                  $csorbitCreateArguments += @('--prerelease', '--latest=false')
+              } else {
+                  $csorbitCreateArguments += '--latest'
+              }
+              & gh @csorbitCreateArguments @csorbitAssets
+          }
+          if ($LASTEXITCODE -ne 0) {
+              throw 'GitHub Release publication failed.'
+          }

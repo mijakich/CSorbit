@@ -8,7 +8,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <IsPackable>true</IsPackable>
     <PackageId>CSorbit</PackageId>
-    <Version>0.3.0</Version>
+    <Version>1.0.0</Version>
     <Description>C# port of Meteor Development Orbit for Godot, Unity and .NET.</Description>
     <Authors>CSorbit contributors; Meteor Development (original Java library)</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
